@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
-from sequencer import CartridgeSequencer
-from robot_proxy import RobotProxy
-from robot_console import robot_console
+from _sequencer import CartridgeSequencer
+from _robot_proxy import RobotProxy
+from _robot_console import robot_console
 
 if __name__ == "__main__":
     parser = ArgumentParser()

@@ -1,4 +1,4 @@
-from robot_proxy import RobotProxy
+from _robot_proxy import RobotProxy
 
 
 class CartridgeSequencer:
