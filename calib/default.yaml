@@ -1,0 +1,22 @@
+calibration:
+  input:
+    origin: [0,0,0]
+    drow: 0.0
+    dcol: 0.0
+    nrow: 1
+    ncol: 1
+    app_dz: 0.05
+  good:
+    origin: [0,0,0]
+    drow: 0
+    dcol: 0
+    nrow: 1
+    ncol: 1
+    app_dz: 0.05
+  bad:
+    origin: [0,0,0]
+    drow: 0
+    dcol: 0
+    nrow: 1
+    ncol: 1
+    app_dz: 0.05
