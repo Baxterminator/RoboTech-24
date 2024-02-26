@@ -123,15 +123,25 @@ class CartridgeSequencer(LoggingInterface):
         Go to the bad bin
         """
         self._info("Dropping inside defect bin")
-        self._proxy.movej(self.state.get_defect_middle_pos())
+        for p in self.state.cpath(
+            self.state.get_good_dropping_approach_pos(),
+            self.state.get_defect_dropping_approach_pos(),
+        ):
+            self._proxy.movej(p)
         self._proxy.movej(self.state.get_defect_dropping_approach_pos())
         self._proxy.movel(self.state.get_defect_dropping_pos())
         self._proxy.wait_steady()
         # self._proxy.open_gripper()
         sleep(0.05)
         self._proxy.movel(self.state.get_defect_dropping_approach_pos())
-        self._proxy.movej(self.state.get_defect_middle_pos())
+        for p in self.state.cpath(
+            self.state.get_defect_dropping_approach_pos(),
+            self.state.get_input_grabbing_approach_pos(),
+        ):
+            self._proxy.movej(p)
+
         self.state.step = Step.END_CARTRIDGE
+        self.state.defect_idx += 1
 
     def cartridge_done(self):
         """

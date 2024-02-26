@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from scipy.spatial.transform.rotation import Rotation
 import math
 
 
@@ -53,37 +54,20 @@ class Pose:
     x: float
     y: float
     z: float
-    rx: float
-    ry: float
-    rz: float
+    rot: Rotation
 
-    deg: bool = False
-
-    def in_deg(self) -> "Pose":
-        if self.deg:
-            return self
-        return Pose(
-            self.x,
-            self.y,
-            self.z,
-            rad2deg(self.rx),
-            rad2deg(self.ry),
-            rad2deg(self.rz),
-            True,
-        )
-
-    def in_rad(self) -> "Pose":
-        if not self.deg:
-            return self
-        return Pose(
-            self.x,
-            self.y,
-            self.z,
-            deg2rad(self.rx),
-            deg2rad(self.ry),
-            deg2rad(self.rz),
-            False,
-        )
+    def __init__(self, _x: float, _y: float, _z: float, _r: Rotation = None):
+        self.x = _x
+        self.y = _y
+        self.z = _z
+        if _r is not None:
+            self.rot = _r
+        else:
+            self.rot = Rotation.from_euler(
+                "ZYX",
+                (math.pi, 0, math.atan2(-self.x, self.y) - math.pi / 2),
+                degrees=False,
+            )
 
 
 @dataclass
@@ -91,3 +75,9 @@ class Vec3:
     x: float
     y: float
     z: float
+
+
+@dataclass
+class Vec2:
+    x: float
+    y: float

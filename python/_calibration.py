@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import yaml
 import os
 
-from _custom_types import JointState, Pose
+from _custom_types import JointState, Pose, Vec2, Vec3
 from _custom_logger import LoggingInterface
 
 DEFAULT_DZ_APPROACH = 0.05
@@ -10,28 +10,29 @@ DEFAULT_DZ_APPROACH = 0.05
 
 @dataclass
 class BinCalibration:
-    origin: Pose
+    origin: Vec3
     dz: float = DEFAULT_DZ_APPROACH
 
-    drow: float = 0.0
-    dcol: float = 0.0
+    drow: Vec2 = Vec2(0.0, 0.0)
+    dcol: Vec2 = Vec2(0.0, 0.0)
 
     nrow: int = 1
     ncol: int = 1
 
     @staticmethod
     def from_dict(d: dict) -> "BinCalibration":
-        bin = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
+        bin = BinCalibration(Vec3(0, 0, 0))
 
-        if "origin" in d.keys() and len(d["origin"]) >= 6:
+        if "origin" in d.keys() and len(d["origin"]) >= 3:
+            # Save origin position and make the right orientation for the tool
             o = d["origin"]
-            bin.origin = Pose(o[0], o[1], o[2], o[3], o[4], o[5], deg=False)
+            bin.origin = Vec3(o[0], o[1], o[2])
         if "app_dz" in d.keys():
             bin.dz = d["app_dz"]
-        if "drow" in d.keys():
-            bin.drow = d["drow"]
-        if "dcol" in d.keys():
-            bin.dcol = d["dcol"]
+        if "drow" in d.keys() and len(d["drow"]) >= 2:
+            bin.drow = Vec2(d["drow"][0], d["drow"][1])
+        if "dcol" in d.keys() and len(d["dcol"]) >= 2:
+            bin.dcol = Vec2(d["dcol"][0], d["dcol"][1])
         if "nrow" in d.keys():
             bin.nrow = d["nrow"]
         if "ncol" in d.keys():
@@ -50,6 +51,8 @@ class BinCalibration:
 
 @dataclass
 class CalibrationData:
+
+    gen_angle_max: float = 5  # In degrees
     input_bin: BinCalibration = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
     good_bin: BinCalibration = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
     defect_bin: BinCalibration = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
@@ -78,6 +81,10 @@ class CalibrationData:
     @staticmethod
     def _load_from_dict(d: dict) -> "CalibrationData":
         out = CalibrationData()
+
+        # Path Circle Generation Parameters
+        if "max-gen-angle" in d.keys():
+            out.gen_angle_max = d["max-gen-angle"]
 
         # Bin calibrations
         if "input" in d.keys():

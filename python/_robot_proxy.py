@@ -199,9 +199,9 @@ class RobotProxy(LoggingInterface):
         """
         # Send the move command
 
-        rad_target = target.in_rad()
         cmd = RobotProxy.MOVE_J
-        if type(rad_target) is JointState:
+        if type(target) is JointState:
+            rad_target = target.in_rad()
             cmd = cmd.format(
                 "j",
                 rad_target.base,
@@ -212,14 +212,15 @@ class RobotProxy(LoggingInterface):
                 rad_target.wrist3,
             )
         elif type(rad_target) is Pose:
+            r = target.rot.as_rotvec()
             cmd = cmd.format(
                 "l",
                 rad_target.x,
                 rad_target.y,
                 rad_target.z,
-                rad_target.rx,
-                rad_target.ry,
-                rad_target.rz,
+                r[0],
+                r[1],
+                r[2],
             )
         result = self.send(cmd)
 
@@ -243,14 +244,15 @@ class RobotProxy(LoggingInterface):
         Receives: mvlok;
         """
         # Send the move command
-        rad_pose = pose.in_rad()
+
+        r = pose.rot.as_rotvec()
         cmd = RobotProxy.MOVE_L.format(
-            rad_pose.x,
-            rad_pose.y,
-            rad_pose.z,
-            rad_pose.rx,
-            rad_pose.ry,
-            rad_pose.rz,
+            pose.x,
+            pose.y,
+            pose.z,
+            r[0],
+            r[1],
+            r[2],
         )
         result = self.send(cmd)
 

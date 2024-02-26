@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
-from copy import deepcopy
+import math
 from typing import Iterator
 
 from _calibration import CalibrationData
 from _custom_types import Pose, JointState
+from _path_utils import generate_grid_pos, gen_circle_path
 
 
 class Step(Enum):
@@ -21,7 +22,11 @@ class Step(Enum):
 @dataclass
 class State:
     calib: CalibrationData
+
+    # Current working state
     input_idx: int = 0
+    read_idx: int = 0
+    defect_idx: int = 0
     step: Step = Step.IDLE
 
     def n_cells(self) -> int:
@@ -30,83 +35,132 @@ class State:
     def is_done(self) -> bool:
         return self.n_cells() <= self.input_idx
 
+    def cpath(self, fr: Pose, to: Pose) -> Iterator[Pose]:
+        for p in gen_circle_path(fr, to, self.calib.gen_angle_max):
+            yield p
+
     # =========================================================================
     # Input move position computations
     # =========================================================================
+    def _get_input_pos(self) -> Pose:
+        """
+        Get the input position for the current cartridge index.
+        """
+        return generate_grid_pos(
+            self.calib.input_bin.origin,
+            self.calib.input_bin.drow,
+            self.calib.input_bin.dcol,
+            self.calib.input_bin.nrow,
+            self.calib.input_bin.ncol,
+            self.input_idx,
+        )
+
     def get_input_grabbing_pos(self) -> Pose:
         """
         Get the input grabbing position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = deepcopy(self.calib.input_bin.origin)
-        return Pose(p.x, p.y, p.z, p.rx, p.ry, p.rz)
+        p = self._get_input_pos()
+
+        # Rotate 45°
+        RPY = p.rot.as_euler("XYZ")
+        RPY[2] += math.pi / 2
+
+        return Pose(p.x, p.y, p.z, RPY)
 
     def get_input_grabbing_approach_pos(self) -> Pose:
         """
         Get the input grabbing approaching position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = self.get_input_grabbing_pos()
+        p = self._get_input_pos()
         p.z += self.calib.input_bin.dz
         return p
 
     # =========================================================================
     # Good Output position computations
     # =========================================================================
+    def _get_good_pos(self) -> Pose:
+        """
+        Get the good bin position for the current cartridge index.
+        """
+        return generate_grid_pos(
+            self.calib.good_bin.origin,
+            self.calib.good_bin.drow,
+            self.calib.good_bin.dcol,
+            self.calib.good_bin.nrow,
+            self.calib.good_bin.ncol,
+            self.read_idx,
+        )
+
     def get_good_dropping_pos(self) -> Pose:
         """
         Get the good output bin dropping position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = deepcopy(self.calib.good_bin.origin)
-        return Pose(p.x, p.y, p.z, p.rx, p.ry, p.rz)
+        p = self._get_good_pos()
+
+        # Rotate 45°
+        RPY = p.rot.as_euler("XYZ")
+        RPY[2] += math.pi / 2
+
+        return Pose(p.x, p.y, p.z, RPY)
 
     def get_good_dropping_approach_pos(self) -> Pose:
         """
         Get the good output bin dropping approaching position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = self.get_good_dropping_pos()
+        p = self._get_good_pos()
         p.z += self.calib.good_bin.dz
         return p
 
     # =========================================================================
     # Bad Output position computations
     # =========================================================================
-    def get_defect_middle_pos(self) -> Iterator[Pose]:
+    def _get_defect_pos(self) -> Pose:
         """
-        Get the good output bin dropping position for the state's cartridge.
-        Goes with row first, then col.
+        Get the good bin position for the current cartridge index.
         """
-        p = self.get_good_dropping_approach_pos()
-        return Pose(0, p.y, p.z, p.rx, p.ry, p.rz)
+        return generate_grid_pos(
+            self.calib.defect_bin.origin,
+            self.calib.defect_bin.drow,
+            self.calib.defect_bin.dcol,
+            self.calib.defect_bin.nrow,
+            self.calib.defect_bin.ncol,
+            self.read_idx,
+        )
 
     def get_defect_dropping_pos(self) -> Pose:
         """
         Get the good output bin dropping position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = deepcopy(self.calib.defect_bin.origin)
-        return Pose(p.x, p.y, p.z, p.rx, p.ry, p.rz)
+        p = self._get_defect_pos()
+
+        # Rotate 45°
+        RPY = p.rot.as_euler("XYZ")
+        RPY[2] += math.pi / 2
+
+        return Pose(p.x, p.y, p.z, RPY)
 
     def get_defect_dropping_approach_pos(self) -> Pose:
         """
         Get the good output bin dropping approaching position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = self.get_defect_dropping_pos()
+        p = self._get_defect_pos()
         p.z += self.calib.defect_bin.dz
         return p
 
     # =========================================================================
     # Calibration positions
     # =========================================================================
-    def get_checking_approach_pos(self) -> Pose:
+    def get_checking_approach_pos(self) -> JointState:
         """
         Get the checking approaching position.
         """
-        p = deepcopy(self.calib.checking_approach)
-        return Pose(p.x, p.y, p.z, 0, 0, 0)
+        return self.calib.checking_approach
 
     def get_qr_checking_pos(self) -> JointState:
         """

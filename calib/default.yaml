@@ -1,23 +1,29 @@
 calibration:
+  # Checking positions all represented in joint states (q1,q2,...,q6), and in degrees.
   checking-approach: [0,0,0,0,0,0]
   qr-code: [0,0,0,0,0,0]
   defect-check: [0,0,0,0,0,0]
+
+  # Bin calibration
+  # Origin must be set as one of the corner and in meters
+  # For drow / dcol, we calibrate the gap in both x and y for the 
+  # next column and next row (in meters).
   input:
-    origin: [-0.3433,0.0441,0.1882, 1.053, -2.911, 0]
-    drow: 0.0
-    dcol: 0.0
+    origin: [-0.3433,0.0441,0.1882]
+    drow: [0.0, 0.0]
+    dcol: [0.0, 0.0]
     nrow: 1
     ncol: 1
     app_dz: 0.05
   good:
-    origin: [-0.0887,-0.288,0.1771,2.734,-1.529,0]
+    origin: [-0.0887,-0.288,0.1771]
     drow: 0
     dcol: 0
     nrow: 1
     ncol: 1
     app_dz: 0.05
   bad:
-    origin: [0.3221,0.026,0.203,2.683, 1.71, 0]
+    origin: [0.3221,0.026,0.203]
     drow: 0
     dcol: 0
     nrow: 1
