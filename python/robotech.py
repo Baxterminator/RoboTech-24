@@ -37,7 +37,7 @@ if __name__ == "__main__":
     LoggingInterface.configure_lvl(args.lvl)
 
     # Create proxies
-    robot = RobotProxy("127.0.0.1", 1500)
+    robot = RobotProxy("10.13.15.50", 1500)
 
     # Run everything
     match args.action:

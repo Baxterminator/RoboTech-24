@@ -17,7 +17,7 @@ class RobotProxy(LoggingInterface):
     # Command patterns
     GET_JOINT_POS = "gjp"
     GET_TCP_POS = "gtp"
-    MOVE_J = "mvj,{},{},{},{},{},{}"
+    MOVE_J = "mvj,{},{},{},{},{},{},{}"
     MOVE_J_RESP = "mvjok"
     MOVE_L = "mvl,{},{},{},{},{},{}"
     MOVE_L_RESP = "mvlok"
@@ -189,7 +189,7 @@ class RobotProxy(LoggingInterface):
             False,
         )
 
-    def movej(self, joints: JointState) -> bool:
+    def movej(self, target: JointState | Pose) -> bool:
         """
         Launch a straight move in joint space.
         Returns whether the command was executed successfully or not.
@@ -198,15 +198,29 @@ class RobotProxy(LoggingInterface):
         Receives: mvjok;
         """
         # Send the move command
-        rad_joints = joints.in_rad()
-        cmd = RobotProxy.MOVE_J.format(
-            rad_joints.base,
-            rad_joints.shoulder,
-            rad_joints.elbow,
-            rad_joints.wrist1,
-            rad_joints.wrist2,
-            rad_joints.wrist3,
-        )
+
+        rad_target = target.in_rad()
+        cmd = RobotProxy.MOVE_J
+        if type(rad_target) is JointState:
+            cmd = cmd.format(
+                "j",
+                rad_target.base,
+                rad_target.shoulder,
+                rad_target.elbow,
+                rad_target.wrist1,
+                rad_target.wrist2,
+                rad_target.wrist3,
+            )
+        elif type(rad_target) is Pose:
+            cmd = cmd.format(
+                "l",
+                rad_target.x,
+                rad_target.y,
+                rad_target.z,
+                rad_target.rx,
+                rad_target.ry,
+                rad_target.rz,
+            )
         result = self.send(cmd)
 
         # Check if client was connected

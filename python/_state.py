@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from copy import deepcopy
+from typing import Iterator
 
 from _calibration import CalibrationData
 from _custom_types import Pose, JointState
@@ -38,7 +39,7 @@ class State:
         Goes with row first, then col.
         """
         p = deepcopy(self.calib.input_bin.origin)
-        return Pose(p.x, p.y, p.z, 0, 0, 0)
+        return Pose(p.x, p.y, p.z, p.rx, p.ry, p.rz)
 
     def get_input_grabbing_approach_pos(self) -> Pose:
         """
@@ -58,7 +59,7 @@ class State:
         Goes with row first, then col.
         """
         p = deepcopy(self.calib.good_bin.origin)
-        return Pose(p.x, p.y, p.z, 0, 0, 0)
+        return Pose(p.x, p.y, p.z, p.rx, p.ry, p.rz)
 
     def get_good_dropping_approach_pos(self) -> Pose:
         """
@@ -72,13 +73,21 @@ class State:
     # =========================================================================
     # Bad Output position computations
     # =========================================================================
+    def get_defect_middle_pos(self) -> Iterator[Pose]:
+        """
+        Get the good output bin dropping position for the state's cartridge.
+        Goes with row first, then col.
+        """
+        p = self.get_good_dropping_approach_pos()
+        return Pose(0, p.y, p.z, p.rx, p.ry, p.rz)
+
     def get_defect_dropping_pos(self) -> Pose:
         """
         Get the good output bin dropping position for the state's cartridge.
         Goes with row first, then col.
         """
         p = deepcopy(self.calib.defect_bin.origin)
-        return Pose(p.x, p.y, p.z, 0, 0, 0)
+        return Pose(p.x, p.y, p.z, p.rx, p.ry, p.rz)
 
     def get_defect_dropping_approach_pos(self) -> Pose:
         """

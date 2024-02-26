@@ -114,16 +114,22 @@ end
 def launch_movel(cmd):
   local split_pose = splitMoveStringPose(cmd)
   movel(split_pose)
-  socket_send_string(str_cat(MVL_A), socket_name)
+  socket_send_string(str_cat(MVL_A, line_sep), socket_name)
 end
 
 # -----------------------------------------------------------------------------
 # ACTION | Linear Joint Move
 # -----------------------------------------------------------------------------
 def launch_movej(cmd):
-  local split_pose = splitMoveStringJoints(cmd)
-  movej(split_pose)
-  socket_send_string(str_cat(MVJ_A, line_sep), socket_name)
+  if str_at(cmd, 0) == "j":
+    local split_pose = splitMoveStringJoints(str_sub(cmd, 2))
+    movej(split_pose)
+    socket_send_string(str_cat(MVJ_A, line_sep), socket_name)
+  else:
+    local split_pose = splitMoveStringPose(str_sub(cmd, 2))
+    movej(split_pose)
+    socket_send_string(str_cat(MVJ_A, line_sep), socket_name)
+  end
 end
 
 # -----------------------------------------------------------------------------
@@ -131,7 +137,7 @@ end
 # -----------------------------------------------------------------------------
 def open_gripper():
   set_tool_digital_out(0, True)
-  socket_send_string(str_cat(GOP, line_sep))
+  socket_send_string(str_cat(GOP, line_sep), socket_name)
 end
 
 # -----------------------------------------------------------------------------
@@ -139,17 +145,23 @@ end
 # -----------------------------------------------------------------------------
 def close_gripper():
   set_tool_digital_out(0, False)
-  socket_send_string(str_cat(GCL, line_sep))
+  socket_send_string(str_cat(GCL, line_sep), socket_name)
 end
 
 # -----------------------------------------------------------------------------
 # ACTION | Waiting for steady
 # -----------------------------------------------------------------------------
 def wait_steady():
-  while not is_steady():
+  local i = 0
+  while (not is_steady()) and (i < 100000):
     sleep(0.1)
+    if i%1000:
+      textmsg(prefix, "Waiting for robot settling ")
+    end
+    i = i + 1
   end
-  socket_send_string(std_cat(WST, line_sep))
+  textmsg(prefix, "Robot settled")
+  socket_send_string(str_cat(WST, line_sep), socket_name)
 end
 
 

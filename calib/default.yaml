@@ -1,20 +1,23 @@
 calibration:
+  checking-approach: [0,0,0,0,0,0]
+  qr-code: [0,0,0,0,0,0]
+  defect-check: [0,0,0,0,0,0]
   input:
-    origin: [0,0,0]
+    origin: [-0.3433,0.0441,0.1882, 1.053, -2.911, 0]
     drow: 0.0
     dcol: 0.0
     nrow: 1
     ncol: 1
     app_dz: 0.05
   good:
-    origin: [0,0,0]
+    origin: [-0.0887,-0.288,0.1771,2.734,-1.529,0]
     drow: 0
     dcol: 0
     nrow: 1
     ncol: 1
     app_dz: 0.05
   bad:
-    origin: [0,0,0]
+    origin: [0.3221,0.026,0.203,2.683, 1.71, 0]
     drow: 0
     dcol: 0
     nrow: 1
