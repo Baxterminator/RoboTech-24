@@ -27,5 +27,5 @@ def robot_console(proxy: RobotProxy):
             STOP = True
             break
         else:
-            proxy.info(f"Response: {result}")
+            proxy._info(f"Response: {result}")
     proxy.close_socket()

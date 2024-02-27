@@ -25,6 +25,9 @@ We are using MQTT protocol.
 mosquitto -v -c mqtt/mosquitto.conf
 ```
 
+(If "Error: Cannot assign requested address": Might need to change the IP adress to the your local IPV4 on the config file.)
+
+
 2. To monitor nodes/topics use node-red
 
 ```shell

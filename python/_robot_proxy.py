@@ -50,30 +50,37 @@ class RobotProxy(LoggingInterface):
             return
 
         if self.__socket is None:
-            self.error("Wanted to connect when socket is closed!")
+            self._error("Wanted to connect when socket is closed!")
             return
 
-        self.info("Waiting for client ...")
+        self._info("Waiting for client ...")
         self.__socket.listen()
         self.__client, add = self.__socket.accept()
-        self.info(f"Client found with IP {add}")
+        self._info(f"Client found with IP {add}")
+
+    def has_client(self) -> bool:
+        """
+        Return True if a client is connected, False otherwise
+        """
+        return self.__client != None
 
     def send(self, msg: str) -> str | None:
         """
         Send a message to the client (if client connected).
         Return the response string, or None if there is a problem with the client.
         """
+        self._debug(f"Sending cmd '{msg}'")
         if self.__client == None:
-            self.warn("Trying to send message when client not connected!")
+            self._warn("Trying to send message when client not connected!")
             return None
 
         if self.__socket is None:
-            self.error("Trying to send a message when socket is closed!")
+            self._error("Trying to send a message when socket is closed!")
             return None
 
         # Send message
-        self.debug(f"Sending cmd '{msg}'")
-        self.__socket.sendall(f"{msg}{RobotProxy.LINE_END}".encode())
+
+        self.__client.sendall(f"{msg}{RobotProxy.LINE_END}".encode())
 
         # Wait for response
         while True:
@@ -88,21 +95,21 @@ class RobotProxy(LoggingInterface):
                 )
 
         # In case of communication error
-        self.warn("Robot disconnected!")
+        self._warn("Robot disconnected!")
         return None
 
     def close_connection(self) -> None:
         """
         Close the connection with the current client.
         """
-        if self.__client is None:
+        if self.__client == None:
             return
-        self.info("Closing client connection")
+        self._info("Closing client connection")
         result = self.send(RobotProxy.STOP)
 
         # Check if result is right:
         if result is not None and not result.startswith(RobotProxy.STOP_RESP):
-            self.error(f"Robot server problem when stopping: {result}")
+            self._error(f"Robot server problem when stopping: {result}")
 
         self.__client = None
 
@@ -110,9 +117,9 @@ class RobotProxy(LoggingInterface):
         """
         Close the socket server.
         """
-        if self.__socket is None:
+        if self.__socket == None:
             return
-        self.info("Closing socket")
+        self._info("Closing socket")
         self.close_connection()
         self.__socket.close()
         self.__socket = None
@@ -140,7 +147,7 @@ class RobotProxy(LoggingInterface):
 
         elems = result.split(RobotProxy.PARAM_SEP)
         if len(elems) <= 7 or elems[0] != RobotProxy.GET_JOINT_POS:
-            self.error(f"Malformed result for GetJoinState : '{result}'")
+            self._error(f"Malformed result for GetJoinState : '{result}'")
             return None
 
         return JointState(
@@ -169,7 +176,7 @@ class RobotProxy(LoggingInterface):
 
         elems = result.split(RobotProxy.PARAM_SEP)
         if len(elems) <= 7 or elems[0] != RobotProxy.GET_TCP_POS:
-            self.error(f"Malformed result for GetJoinState : '{result}'")
+            self._error(f"Malformed result for GetJoinState : '{result}'")
             return None
 
         return Pose(
@@ -208,7 +215,7 @@ class RobotProxy(LoggingInterface):
 
         # Check if result is right:
         if not result.startswith(RobotProxy.MOVE_J_RESP):
-            self.error(f"Robot server problem when MoveJ: {cmd} -> {result}")
+            self._error(f"Robot server problem when MoveJ: {cmd} -> {result}")
             return False
 
         return True
@@ -239,7 +246,7 @@ class RobotProxy(LoggingInterface):
 
         # Check if result is right:
         if not result.startswith(RobotProxy.MOVE_L_RESP):
-            self.error(f"Robot server problem when MoveL: {cmd} -> {result}")
+            self._error(f"Robot server problem when MoveL: {cmd} -> {result}")
             return False
 
         return True
@@ -260,7 +267,7 @@ class RobotProxy(LoggingInterface):
 
         # Check if result is right:
         if not result.startswith(RobotProxy.OPEN_GRIPPER):
-            self.error(f"Robot server problem when opening gripper: {result}")
+            self._error(f"Robot server problem when opening gripper: {result}")
             return False
 
         return True
@@ -281,7 +288,7 @@ class RobotProxy(LoggingInterface):
 
         # Check if result is right:
         if not result.startswith(RobotProxy.CLOSE_GRIPPER):
-            self.error(f"Robot server problem when closing gripper: {result}")
+            self._error(f"Robot server problem when closing gripper: {result}")
             return False
 
         return True
@@ -302,7 +309,7 @@ class RobotProxy(LoggingInterface):
 
         # Check if result is right:
         if not result.startswith(RobotProxy.WAIT_STEADY):
-            self.error(f"Robot server problem when waiting for steadiness: {result}")
+            self._error(f"Robot server problem when waiting for steadiness: {result}")
             return False
 
         return True

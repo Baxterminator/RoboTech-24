@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 import math
 
+
 def deg2rad(x: float) -> float:
-    return math.pi*x/180
+    return math.pi * x / 180
+
 
 def rad2deg(x: float) -> float:
-    return 180*x/math.pi
+    return 180 * x / math.pi
+
 
 @dataclass
 class JointState:
@@ -28,9 +31,9 @@ class JointState:
             rad2deg(self.wrist1),
             rad2deg(self.wrist2),
             rad2deg(self.wrist3),
-            True
+            True,
         )
-    
+
     def in_rad(self) -> "JointState":
         if not self.deg:
             return self
@@ -41,8 +44,9 @@ class JointState:
             deg2rad(self.wrist1),
             deg2rad(self.wrist2),
             deg2rad(self.wrist3),
-            False
+            False,
         )
+
 
 @dataclass
 class Pose:
@@ -65,9 +69,9 @@ class Pose:
             rad2deg(self.rx),
             rad2deg(self.ry),
             rad2deg(self.rz),
-            True
+            True,
         )
-    
+
     def in_rad(self) -> "Pose":
         if not self.deg:
             return self
@@ -78,5 +82,12 @@ class Pose:
             deg2rad(self.rx),
             deg2rad(self.ry),
             deg2rad(self.rz),
-            False
+            False,
         )
+
+
+@dataclass
+class Vec3:
+    x: float
+    y: float
+    z: float
