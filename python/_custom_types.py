@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from scipy.spatial.transform.rotation import Rotation
 import math
 
+EULER_CONV = "xyz"
+
 
 def deg2rad(x: float) -> float:
     return math.pi * x / 180
@@ -64,8 +66,8 @@ class Pose:
             self.rot = _r
         else:
             self.rot = Rotation.from_euler(
-                "ZYX",
-                (math.pi, 0, math.atan2(-self.x, self.y) - math.pi / 2),
+                EULER_CONV,
+                (math.pi, 0, math.atan2(-self.x, self.y) - 3 * math.pi / 4),
                 degrees=False,
             )
 

@@ -1,5 +1,5 @@
 import socket
-from _custom_types import JointState, Pose, rad2deg
+from _custom_types import JointState, Pose, rad2deg, EULER_CONV
 from _custom_logger import LoggingInterface
 
 
@@ -17,9 +17,9 @@ class RobotProxy(LoggingInterface):
     # Command patterns
     GET_JOINT_POS = "gjp"
     GET_TCP_POS = "gtp"
-    MOVE_J = "mvj,{},{},{},{},{},{},{}"
+    MOVE_J = "mvj,{},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f}"
     MOVE_J_RESP = "mvjok"
-    MOVE_L = "mvl,{},{},{},{},{},{}"
+    MOVE_L = "mvl,{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f}"
     MOVE_L_RESP = "mvlok"
     OPEN_GRIPPER = "gop"
     CLOSE_GRIPPER = "gcl"
@@ -87,11 +87,10 @@ class RobotProxy(LoggingInterface):
             data = self.__client.recv(1024)
             if not data:
                 break
-            if len(data.decode()) > 1:
-                return (
-                    data.decode()
-                    .split(RobotProxy.LINE_END)[0]
-                    .replace(RobotProxy.LINE_END, "")
+            data = data.decode().replace("\x00", "")
+            if len(data) >= 1:
+                return data.split(RobotProxy.LINE_END)[0].replace(
+                    RobotProxy.LINE_END, ""
                 )
 
         # In case of communication error
@@ -105,10 +104,10 @@ class RobotProxy(LoggingInterface):
         if self.__client == None:
             return
         self._info("Closing client connection")
-        result = self.send(RobotProxy.STOP)
+        result = self.stop_program()
 
         # Check if result is right:
-        if result is not None and not result.startswith(RobotProxy.STOP_RESP):
+        if not result:
             self._error(f"Robot server problem when stopping: {result}")
 
         self.__client = None
@@ -211,16 +210,22 @@ class RobotProxy(LoggingInterface):
                 rad_target.wrist2,
                 rad_target.wrist3,
             )
-        elif type(rad_target) is Pose:
+        elif type(target) is Pose:
+            r_rpy_d = target.rot.as_euler(EULER_CONV, degrees=True)
+            r_rpy_r = target.rot.as_euler(EULER_CONV, degrees=False)
             r = target.rot.as_rotvec()
+
+            self._debug(
+                f"Launch moveJ with rotations:\n\t-> RPY[{r_rpy_d[0]:.2f}° / {r_rpy_r[0]:.4f} rad | {r_rpy_d[1]:.2f}° / {r_rpy_r[1]:.4f} rad | {r_rpy_d[2]:.2f}° / {r_rpy_r[2]:.4f} rad]\n\t-> RotAxis[{r[0]:.4f},{r[1]:.4f},{r[2]:.4f}]"
+            )
             cmd = cmd.format(
                 "l",
-                rad_target.x,
-                rad_target.y,
-                rad_target.z,
-                r[0],
-                r[1],
-                r[2],
+                target.x,
+                target.y,
+                target.z,
+                float(r[0]),
+                float(r[1]),
+                float(r[2]),
             )
         result = self.send(cmd)
 
@@ -250,9 +255,9 @@ class RobotProxy(LoggingInterface):
             pose.x,
             pose.y,
             pose.z,
-            r[0],
-            r[1],
-            r[2],
+            float(r[0]),
+            float(r[1]),
+            float(r[2]),
         )
         result = self.send(cmd)
 
@@ -326,6 +331,46 @@ class RobotProxy(LoggingInterface):
         # Check if result is right:
         if not result.startswith(RobotProxy.WAIT_STEADY):
             self._error(f"Robot server problem when waiting for steadiness: {result}")
+            return False
+
+        return True
+
+    def stop_program(self) -> bool:
+        """
+        Launch a stop command to the robot to stop the program
+
+        Sends:    stp;
+        Receives: stp;
+        """
+        result = self.send(RobotProxy.STOP)
+
+        # Check if client was connected
+        if result == None:
+            return False
+
+        # Check if result is right:
+        if not result.startswith(RobotProxy.STOP):
+            self._error(f"Robot server problem when waiting for stop: {result}")
+            return False
+
+        return True
+
+    def send_comment(self, msg: str) -> bool:
+        """
+        Send a comment to the robot (only for display)
+
+        sends: #<comment>;
+        receives: nothing
+        """
+        result = self.send(f"#{msg.lstrip()}")
+
+        # Check if client was connected
+        if result == None:
+            return False
+
+        # Check if result is right:
+        if not result.startswith("--"):
+            self._error(f"Robot server problem when commenting: ({result})")
             return False
 
         return True

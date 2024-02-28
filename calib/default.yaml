@@ -9,23 +9,23 @@ calibration:
   # For drow / dcol, we calibrate the gap in both x and y for the 
   # next column and next row (in meters).
   input:
-    origin: [-0.3433,0.0441,0.1882]
-    drow: [0.0, 0.0]
-    dcol: [0.0, 0.0]
+    origin: [-0.33688,0.04778,0.09725]
+    drow: [-0.04504,0.00034]
+    dcol: [-0.00017,-0.341593]
     nrow: 1
     ncol: 1
-    app_dz: 0.05
+    app_dz: 0.08
   good:
-    origin: [-0.0887,-0.288,0.1771]
-    drow: 0
-    dcol: 0
-    nrow: 1
-    ncol: 1
-    app_dz: 0.05
-  bad:
-    origin: [0.3221,0.026,0.203]
-    drow: 0
-    dcol: 0
-    nrow: 1
-    ncol: 1
-    app_dz: 0.05
+    origin: [-0.0831,-0.2803,0.1629]
+    drow: [0.04323,-0.0014]
+    dcol: [0.0001,-0.04826]
+    nrow: 3
+    ncol: 3
+    app_dz: 0.03
+  defect:
+    origin: [0.3277,0.0264,0.1629]
+    drow: [0.04516666667,0.0025]
+    dcol: [-0.001066666667,-0.04366666667]
+    nrow: 3
+    ncol: 3
+    app_dz: 0.03

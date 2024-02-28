@@ -20,6 +20,12 @@ if __name__ == "__main__":
         help="Define the log level",
         choices=["debug", "info", "warn", "error"],
     )
+    parser.add_argument(
+        "-s",
+        "--step",
+        action="store_true",
+        help="Sequencer should move step by step (requires input for next action)",
+    )
     args = parser.parse_args()
 
     printHeader(
@@ -37,14 +43,15 @@ if __name__ == "__main__":
     LoggingInterface.configure_lvl(args.lvl)
 
     # Create proxies
-    robot = RobotProxy("10.13.15.50", 1500)
+    robot = RobotProxy("10.13.15.156", 1501)
 
     # Run everything
     match args.action:
         case "cmd":
             robot_console(robot)
         case "run":
-            CartridgeSequencer(robot, args.config).run()
+            print(args.step)
+            CartridgeSequencer(robot, args.config, args.step).run()
         case _:
             print("Unknown command!")
     robot.close_connection()

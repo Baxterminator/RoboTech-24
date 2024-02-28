@@ -1,6 +1,6 @@
 global prefix = "[RoboTech-24] "
-global ip = "10.13.15.50"
-global port = 1500
+global ip = "10.13.15.156"
+global port = 1501
 global socket_name = "socket_01"
 global param_sep = ","
 global line_sep = ";"
@@ -67,12 +67,12 @@ def splitMoveStringJoints(cmd):
   local num_idx = 0
   while (last_char <= cmd_len):
     if last_char == cmd_len:
-      textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
+      #textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
       pose[num_idx] = to_num(str_sub(cmd, start_char, last_char - start_char))
       num_idx = num_idx + 1
       start_char = last_char + 1
     elif str_at(cmd, last_char) == ",":
-      textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
+      #textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
       pose[num_idx] = to_num(str_sub(cmd, start_char, last_char - start_char))
       num_idx = num_idx + 1
       start_char = last_char + 1
@@ -92,12 +92,12 @@ def splitMoveStringPose(cmd):
   local num_idx = 0
   while (last_char <= cmd_len):
     if last_char == cmd_len:
-      textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
+      #textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
       pose[num_idx] = to_num(str_sub(cmd, start_char, last_char - start_char))
       num_idx = num_idx + 1
       start_char = last_char + 1
     elif str_at(cmd, last_char) == ",":
-      textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
+      #textmsg("Got", str_sub(cmd, start_char, last_char - start_char))
       pose[num_idx] = to_num(str_sub(cmd, start_char, last_char - start_char))
       num_idx = num_idx + 1
       start_char = last_char + 1
@@ -136,7 +136,7 @@ end
 # ACTION | Open Gripper
 # -----------------------------------------------------------------------------
 def open_gripper():
-  set_tool_digital_out(0, True)
+  set_tool_digital_out(1, True)
   socket_send_string(str_cat(GOP, line_sep), socket_name)
 end
 
@@ -144,7 +144,7 @@ end
 # ACTION | Closing gripper
 # -----------------------------------------------------------------------------
 def close_gripper():
-  set_tool_digital_out(0, False)
+  set_tool_digital_out(1, False)
   socket_send_string(str_cat(GCL, line_sep), socket_name)
 end
 
@@ -171,45 +171,70 @@ end
 #
 # =============================================================================
 textmsg(prefix, "Test Socket (one connexion per program run)")
-if (socket_open(ip, port, socket_name)):
-  textmsg(prefix, "Opened Socket!")
+set_standard_digital_out(7, False)
 
-  # Test whether the socket is open
+# Try to open socket if not opened
+while not is_open():
+  socket_open(ip, port, socket_name)
+  if is_open():
+    textmsg(prefix, "Opened Socket!")
+  else:
+    textmsg(prefix, "Couldn't open socket!")
+  end
+  sleep(0.1)
+end
+
+# If socket opened, try message
+if (is_open()):
   local msg_type = ""
   local cmd = ""
-  while is_open():
+  local running = True
+  while running:
+    # If server has stopped
+    if not is_open():
+      textmsg(prefix, "Connection closed by server !")
+      socket_close(socket_name)
+    end
+
     # Receive cmd
     cmd = socket_read_string(socket_name, suffix = line_sep, timeout = 0)
 
     # Parse it
     if (str_len(cmd) != 0):
-      textmsg(prefix, str_cat(str_cat("Got cmd [", cmd), "]"))
-      msg_type = str_sub(cmd, 0, 3)
-
-      # Execute the command
-      if (msg_type == GJP):
-        get_joint_state()
-      elif (msg_type == GTP):
-        get_tcp_pos()
-      elif (msg_type == MVL):
-        launch_movel(str_sub(cmd, 4))
-      elif (msg_type == MVJ):
-        launch_movej(str_sub(cmd, 4))
-      elif (msg_type == GOP):
-        open_gripper()
-      elif (msg_type == GCL):
-        close_gripper()
-      elif (msg_type == WST):
-        wait_steady()
-      elif (msg_type == STP):
-        socket_send_string(str_cat(STP_A, line_sep), socket_name)
-        socket_close(socket_name)
+      if (str_at(cmd, 0) == "#"):
+        # If receiving a comment
+        textmsg(prefix, str_sub(cmd, 1))
+        socket_send_string(str_cat("--", line_sep), socket_name)
       else:
-        socket_send_string(str_cat(UKN, line_sep), socket_name)
+        # Else it's a command
+        textmsg(prefix, str_cat(str_cat("Got cmd [", cmd), "]"))
+        msg_type = str_sub(cmd, 0, 3)
+
+        # Execute the command
+        if (msg_type == GJP):
+          get_joint_state()
+        elif (msg_type == GTP):
+          get_tcp_pos()
+        elif (msg_type == MVL):
+          launch_movel(str_sub(cmd, 4))
+        elif (msg_type == MVJ):
+          launch_movej(str_sub(cmd, 4))
+        elif (msg_type == GOP):
+          open_gripper()
+          running = False
+        elif (msg_type == GCL):
+          close_gripper()
+          running = False
+        elif (msg_type == WST):
+          wait_steady()
+        elif (msg_type == STP):
+          socket_send_string(str_cat(STP_A, line_sep), socket_name)
+          set_standard_digital_out(7, True)
+          socket_close(socket_name)
+        else:
+          socket_send_string(str_cat(UKN, line_sep), socket_name)
+        end
       end
     end
   end
-
-  textmsg(prefix, "Connection closed by server !")
 end
-socket_close(socket_name)

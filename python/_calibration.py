@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 import yaml
 import os
 
@@ -51,11 +52,12 @@ class BinCalibration:
 
 @dataclass
 class CalibrationData:
+    gen_angle_max: float = 15 * math.pi / 180  # In radians
+    grabbing_time: float = 0.2
 
-    gen_angle_max: float = 5  # In degrees
-    input_bin: BinCalibration = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
-    good_bin: BinCalibration = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
-    defect_bin: BinCalibration = BinCalibration(Pose(0, 0, 0, 0, 0, 0))
+    input_bin: BinCalibration = BinCalibration(Vec3(0, 0, 0))
+    good_bin: BinCalibration = BinCalibration(Vec3(0, 0, 0))
+    defect_bin: BinCalibration = BinCalibration(Vec3(0, 0, 0))
 
     checking_approach: JointState = JointState(0, 0, 0, 0, 0, 0)
     qr_checking: JointState = JointState(0, 0, 0, 0, 0, 0)
@@ -84,7 +86,10 @@ class CalibrationData:
 
         # Path Circle Generation Parameters
         if "max-gen-angle" in d.keys():
-            out.gen_angle_max = d["max-gen-angle"]
+            out.gen_angle_max = d["max-gen-angle"] * math.pi / 180
+
+        if "grab-time" in d.keys():
+            out.grabbing_time = d["grab-time"]
 
         # Bin calibrations
         if "input" in d.keys():

@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from enum import Enum
 import math
 from typing import Iterator
+from scipy.spatial.transform.rotation import Rotation
 
 from _calibration import CalibrationData
-from _custom_types import Pose, JointState
+from _custom_types import Pose, JointState, EULER_CONV
 from _path_utils import generate_grid_pos, gen_circle_path
 
 
@@ -63,17 +64,17 @@ class State:
         p = self._get_input_pos()
 
         # Rotate 45°
-        RPY = p.rot.as_euler("XYZ")
-        RPY[2] += math.pi / 2
+        RPY = p.rot.as_euler(EULER_CONV)
+        # RPY[2] += math.pi / 2
 
-        return Pose(p.x, p.y, p.z, RPY)
+        return Pose(p.x, p.y, p.z, Rotation.from_euler(EULER_CONV, RPY))
 
     def get_input_grabbing_approach_pos(self) -> Pose:
         """
         Get the input grabbing approaching position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = self._get_input_pos()
+        p = self.get_input_grabbing_pos()
         p.z += self.calib.input_bin.dz
         return p
 
@@ -101,17 +102,17 @@ class State:
         p = self._get_good_pos()
 
         # Rotate 45°
-        RPY = p.rot.as_euler("XYZ")
-        RPY[2] += math.pi / 2
+        RPY = p.rot.as_euler(EULER_CONV)
+        # RPY[2] += math.pi / 2
 
-        return Pose(p.x, p.y, p.z, RPY)
+        return Pose(p.x, p.y, p.z, Rotation.from_euler(EULER_CONV, RPY))
 
     def get_good_dropping_approach_pos(self) -> Pose:
         """
         Get the good output bin dropping approaching position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = self._get_good_pos()
+        p = self.get_good_dropping_pos()
         p.z += self.calib.good_bin.dz
         return p
 
@@ -139,17 +140,17 @@ class State:
         p = self._get_defect_pos()
 
         # Rotate 45°
-        RPY = p.rot.as_euler("XYZ")
-        RPY[2] += math.pi / 2
+        RPY = p.rot.as_euler(EULER_CONV)
+        # RPY[2] += math.pi / 2
 
-        return Pose(p.x, p.y, p.z, RPY)
+        return Pose(p.x, p.y, p.z, Rotation.from_euler(EULER_CONV, RPY))
 
     def get_defect_dropping_approach_pos(self) -> Pose:
         """
         Get the good output bin dropping approaching position for the state's cartridge.
         Goes with row first, then col.
         """
-        p = self._get_defect_pos()
+        p = self.get_defect_dropping_pos()
         p.z += self.calib.defect_bin.dz
         return p
 

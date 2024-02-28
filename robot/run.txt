@@ -1,0 +1,12 @@
+ Program
+   Variables Setup
+   Robot Program
+     Script: RBTch-socket.script
+     Popup: Done
+     Halt
+     RG Grip
+     Loop
+       If tool_out[0]≟ True 
+         RG Grip
+       Else
+         RG Grip
