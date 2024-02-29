@@ -1,0 +1,6 @@
+calibration: "config/calib.yaml"
+robot:
+  ip: "10.13.15.156"
+  port: 1501
+mqtt: "config/mosquitto.conf"
+logger-level: info

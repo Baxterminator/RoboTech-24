@@ -50,6 +50,17 @@ class JointState:
             False,
         )
 
+    def __repr__(self) -> str:
+        u = "°" if self.in_deg else " rad"
+        s = "JointState:\n"
+        s += f'\t\t\t{f"Base: {self.base}{u}".ljust(20)}'
+        s += f'{f"Shoulder: {self.shoulder}{u}".ljust(20)}'
+        s += f'{f"Elbow: {self.elbow}{u}".ljust(20)}\n'
+        s += f'\t\t\t{f"Wrist 1: {self.wrist1}{u}".ljust(20)}'
+        s += f'{f"Wrist 2: {self.wrist2}{u}".ljust(20)}'
+        s += f'{f"Wrist 3: {self.wrist3}{u}".ljust(20)}'
+        return s
+
 
 @dataclass
 class Pose:

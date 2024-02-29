@@ -1,7 +1,7 @@
 import math
 from typing import Iterator
-from _custom_types import Vec3, Vec2, Pose
-from _custom_logger import LoggingInterface
+from python.common.utils._custom_types import Vec3, Vec2, Pose
+from python.common.utils._custom_logger import LoggingInterface
 
 
 def generate_grid_pos(

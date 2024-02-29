@@ -1,8 +1,12 @@
 from argparse import ArgumentParser
-from _custom_logger import LoggingInterface, printHeader
-from _sequencer import CartridgeSequencer
-from _robot_proxy import RobotProxy
-from _robot_console import robot_console
+from python.common.utils._custom_logger import printHeader, printSection
+from python.run._sequencer import CartridgeSequencer
+from python.proxies._robot_proxy import RobotProxy
+from proxies._lector_proxy import LectorProxy
+from python.console._console import robot_console
+from common.utils._yaml_loader import YAMLLoader
+from common.configs._configuration import ConfigurationFile
+from common.configs._calibration import CalibrationData
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -12,13 +16,11 @@ if __name__ == "__main__":
         help="Use run to use the sequencer, cmd for direction robot console",
     )
     parser.add_argument(
-        "-c", "--config", help="Configuration file path", type=str, default=""
-    )
-    parser.add_argument(
-        "-l",
-        "--lvl",
-        help="Define the log level",
-        choices=["debug", "info", "warn", "error"],
+        "-c",
+        "--config",
+        help="Configuration file path",
+        type=str,
+        default="config/main.yaml",
     )
     parser.add_argument(
         "-s",
@@ -39,19 +41,23 @@ if __name__ == "__main__":
         ]
     )
 
-    # Configure logger
-    LoggingInterface.configure_lvl(args.lvl)
+    config = YAMLLoader[ConfigurationFile].from_file(ConfigurationFile(), args.config)
+    calib = YAMLLoader[CalibrationData].from_file(CalibrationData(), config.calib_file)
+    print(config)
+    print(calib)
 
     # Create proxies
-    robot = RobotProxy("10.13.15.156", 1501)
+    robot = RobotProxy(config.robot_ip, config.robot_port)
+    lector = LectorProxy(config.mqtt_ip, "PLC")
 
     # Run everything
     match args.action:
         case "cmd":
-            robot_console(robot, args.config)
+            printSection("Console")
+            robot_console(robot, lector, calib)
         case "run":
-            print(args.step)
-            CartridgeSequencer(robot, args.config, args.step).run()
+            printSection("Sequencer")
+            CartridgeSequencer(robot, calib, args.step).run()
         case _:
             print("Unknown command!")
     robot.close_connection()

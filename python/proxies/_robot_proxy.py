@@ -1,6 +1,6 @@
 import socket
-from _custom_types import JointState, Pose, rad2deg, EULER_CONV
-from _custom_logger import LoggingInterface
+from common.utils._custom_types import JointState, Pose, rad2deg, EULER_CONV
+from common.utils._custom_logger import LoggingInterface
 
 
 class RobotProxy(LoggingInterface):

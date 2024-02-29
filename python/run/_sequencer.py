@@ -1,19 +1,24 @@
 from time import sleep
 import signal
 
-from _robot_proxy import RobotProxy
-from _calibration import CalibrationData
-from _custom_logger import LoggingInterface
-from _state import Step, State
+from python.proxies._robot_proxy import RobotProxy
+from python.common.configs._calibration import CalibrationData
+from python.common.utils._custom_logger import LoggingInterface
+from common._state import Step, State
 
 
 class CartridgeSequencer(LoggingInterface):
 
-    def __init__(self, proxy: RobotProxy, calib_path: str, step: bool = False):
+    def __init__(
+        self,
+        robot: RobotProxy,
+        calib_data: CalibrationData,
+        step: bool = False,
+    ):
         super().__init__("Sequencer")
-        self._proxy = proxy
+        self._robot = robot
         self.step = step
-        self.state = State(CalibrationData.load_from_file(calib_path))
+        self.state = State(calib_data)
         self.STOP = False
         signal.signal(signal.SIGTERM, self.stop_sequence)
 
@@ -26,16 +31,12 @@ class CartridgeSequencer(LoggingInterface):
         self.STOP = True
 
     def run(self):
-        self._info("Beginning sequence!")
-        self._info(f"Loaded calibration data:\n{self.state.calib}")
-        self._info("Test")
-
         self.state.step = Step.IDLE
         self.STOP = False
         while self.state.step != Step.DONE and not self.STOP:
             # If no client, wait for a new one
-            if not self._proxy.has_client():
-                self._proxy.wait_client()
+            if not self._robot.has_client():
+                self._robot.wait_client()
 
             match self.state.step:
                 case Step.IDLE:
@@ -59,8 +60,8 @@ class CartridgeSequencer(LoggingInterface):
         """
         self._info("Waiting for input to begin...")
         input()
-        self._proxy.send_comment("Launching sequence")
-        self._proxy.close_gripper()
+        self._info("Beginning sequence!")
+        self._robot.close_gripper()
         self.state.step = Step.MV_INPUT
 
     def go_input(self):
@@ -68,27 +69,27 @@ class CartridgeSequencer(LoggingInterface):
         Let's go to input
         """
         self._info("Going to input bin")
-        self._proxy.close_gripper()
-        self._proxy.open_gripper()
-        self._proxy.close_gripper()
-        self._proxy.open_gripper()
-        self._proxy.send_comment("Moving to input bin")
-        self._proxy.movej(self.state.get_safe_input_pos())
+        self._robot.close_gripper()
+        self._robot.open_gripper()
+        self._robot.close_gripper()
+        self._robot.open_gripper()
+        self._robot.send_comment("Moving to input bin")
+        self._robot.movej(self.state.get_safe_input_pos())
         self._step_pos()
-        self._proxy.movel(self.state.get_input_grabbing_approach_pos())
+        self._robot.movel(self.state.get_input_grabbing_approach_pos())
         self._step_pos()
-        self._proxy.movel(self.state.get_input_grabbing_pos())
-        self._proxy.wait_steady()
+        self._robot.movel(self.state.get_input_grabbing_pos())
+        self._robot.wait_steady()
         self._step_pos()
 
-        self._proxy.send_comment("Grabbing cartridge")
-        self._proxy.close_gripper()
+        self._robot.send_comment("Grabbing cartridge")
+        self._robot.close_gripper()
         sleep(self.state.calib.grabbing_time)
 
-        self._proxy.send_comment("Returning to approach position")
-        self._proxy.movel(self.state.get_input_grabbing_approach_pos())
+        self._robot.send_comment("Returning to approach position")
+        self._robot.movel(self.state.get_input_grabbing_approach_pos())
         self._step_pos()
-        self._proxy.movej(self.state.get_safe_input_pos())
+        self._robot.movej(self.state.get_safe_input_pos())
         self._step_pos()
         self.state.step = Step.CHECK_QR
 
@@ -97,10 +98,10 @@ class CartridgeSequencer(LoggingInterface):
         Checking the QR codegood
         """
         self._info("Checking for QR code")
-        self._proxy.send_comment("Moving to QR checking")
-        self._proxy.movej(self.state.get_checking_approach_pos())
-        self._proxy.movej(self.state.get_qr_checking_pos())
-        self._proxy.wait_steady()
+        self._robot.send_comment("Moving to QR checking")
+        self._robot.movej(self.state.get_checking_approach_pos())
+        self._robot.movej(self.state.get_qr_checking_pos())
+        self._robot.wait_steady()
         self._step_pos()
         # TODO: Check QR Code
         self.state.read_idx = 0
@@ -112,18 +113,18 @@ class CartridgeSequencer(LoggingInterface):
             self._info("No anomalies for the QR-Code, continuing checking")
             self.state.step = Step.CHECK_ANOMALIES
 
-        self._proxy.movej(self.state.get_checking_approach_pos())
+        self._robot.movej(self.state.get_checking_approach_pos())
 
     def check_anomaly(self):
         """
         Checking for anomalies
         """
         self._info("Checking for anomalies")
-        self._proxy.send_comment("Moving to Anomalies checking")
-        self._proxy.movej(self.state.get_defect_checking_pos())
-        self._proxy.wait_steady()
-        self._proxy.movej(self.state.get_defect_checking_pos2())
-        self._proxy.wait_steady()
+        self._robot.send_comment("Moving to Anomalies checking")
+        self._robot.movej(self.state.get_defect_checking_pos())
+        self._robot.wait_steady()
+        self._robot.movej(self.state.get_defect_checking_pos2())
+        self._robot.wait_steady()
         self._step_pos()
         # TODO: Check defects
         defect = True
@@ -134,7 +135,7 @@ class CartridgeSequencer(LoggingInterface):
             self._info("No cartridge anomaly detected, moving it to the good  bin.")
             self.state.step = Step.MV_GOOD_BIN
 
-        self._proxy.movej(self.state.get_checking_approach_pos())
+        self._robot.movej(self.state.get_checking_approach_pos())
         self._step_pos()
 
     def go_good_bin(self):
@@ -143,23 +144,23 @@ class CartridgeSequencer(LoggingInterface):
         """
         self._info("Dropping inside good bin")
 
-        self._proxy.send_comment("Moving to good bin position")
-        self._proxy.movej(self.state.get_safe_good_pos())
+        self._robot.send_comment("Moving to good bin position")
+        self._robot.movej(self.state.get_safe_good_pos())
         self._step_pos()
-        self._proxy.movej(self.state.get_good_dropping_approach_pos())
+        self._robot.movej(self.state.get_good_dropping_approach_pos())
         self._step_pos()
-        self._proxy.movel(self.state.get_good_dropping_pos())
-        self._proxy.wait_steady()
+        self._robot.movel(self.state.get_good_dropping_pos())
+        self._robot.wait_steady()
         self._step_pos()
 
-        self._proxy.send_comment("Dropping catridge")
-        self._proxy.open_gripper()
+        self._robot.send_comment("Dropping catridge")
+        self._robot.open_gripper()
         sleep(self.state.calib.grabbing_time)
 
-        self._proxy.send_comment("Returning to approach position")
-        self._proxy.movel(self.state.get_good_dropping_approach_pos())
+        self._robot.send_comment("Returning to approach position")
+        self._robot.movel(self.state.get_good_dropping_approach_pos())
         self._step_pos()
-        self._proxy.movej(self.state.get_safe_good_pos())
+        self._robot.movej(self.state.get_safe_good_pos())
         self._step_pos()
         self.state.step = Step.END_CARTRIDGE
 
@@ -168,31 +169,31 @@ class CartridgeSequencer(LoggingInterface):
         Go to the bad bin
         """
         self._info("Dropping inside defect bin")
-        self._proxy.send_comment("Going to the defective bin ...")
-        self._proxy.movej(self.state.get_safe_good_pos())
+        self._robot.send_comment("Going to the defective bin ...")
+        self._robot.movej(self.state.get_safe_good_pos())
         self._step_pos()
-        self._proxy.movej(self.state.get_safe_defect_pos())
-        self._step_pos()
-
-        self._proxy.send_comment("Moving to defective bin approach position")
-        self._proxy.movej(self.state.get_defect_dropping_approach_pos())
-        self._step_pos()
-        self._proxy.movel(self.state.get_defect_dropping_pos())
-        self._proxy.wait_steady()
+        self._robot.movej(self.state.get_safe_defect_pos())
         self._step_pos()
 
-        self._proxy.send_comment("Dropping catridge")
-        self._proxy.open_gripper()
+        self._robot.send_comment("Moving to defective bin approach position")
+        self._robot.movej(self.state.get_defect_dropping_approach_pos())
+        self._step_pos()
+        self._robot.movel(self.state.get_defect_dropping_pos())
+        self._robot.wait_steady()
+        self._step_pos()
+
+        self._robot.send_comment("Dropping catridge")
+        self._robot.open_gripper()
         sleep(self.state.calib.grabbing_time)
 
-        self._proxy.send_comment("Returning to approach position")
-        self._proxy.movej(self.state.get_defect_dropping_approach_pos())
+        self._robot.send_comment("Returning to approach position")
+        self._robot.movej(self.state.get_defect_dropping_approach_pos())
         self._step_pos()
 
-        self._proxy.send_comment("Going to the input bin ...")
-        self._proxy.movej(self.state.get_safe_defect_pos())
+        self._robot.send_comment("Going to the input bin ...")
+        self._robot.movej(self.state.get_safe_defect_pos())
         self._step_pos()
-        self._proxy.movej(self.state.get_safe_good_pos())
+        self._robot.movej(self.state.get_safe_good_pos())
         self._step_pos()
 
         self.state.step = Step.END_CARTRIDGE

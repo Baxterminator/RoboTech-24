@@ -21,7 +21,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # Else process cmd
         if data[0] == "#":
             print(data)
-            s.sendall("##".encode())
+            s.sendall("--".encode())
         else:
             print(f'Got cmd: "{data}"')
             if len(data) < 3:

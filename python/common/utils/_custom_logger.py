@@ -121,3 +121,7 @@ def printHeader(text: List[Tuple[str, bool]]) -> None:
         else:
             print(HEADER_CENTER + line[0].center(HEADER_WIDTH) + SUFFIX)
     print(HEADER_SEP + "".center(HEADER_WIDTH, "=") + SUFFIX)
+
+
+def printSection(text: str) -> None:
+    print(HEADER_SEP + f" {text} ".center(HEADER_WIDTH, "=") + SUFFIX)

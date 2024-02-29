@@ -3,8 +3,9 @@ import math
 import yaml
 import os
 
-from _custom_types import JointState, Pose, Vec2, Vec3
-from _custom_logger import LoggingInterface
+from ..utils._custom_types import JointState, Pose, Vec2, Vec3
+from ..utils._custom_logger import LoggingInterface
+from ..utils._yaml_loader import YAMLFile
 
 DEFAULT_DZ_APPROACH = 0.05
 
@@ -55,6 +56,7 @@ class BinCalibration:
     def __repr__(self) -> str:
         s = "Bin:\n"
         s += f"\t\tOrigin: {self.origin}\n"
+        s += f"\t\tSafe pos: {self.safe}\n"
         s += f"\t\tDz: {self.dz}\n"
         s += f"\t\tDrow: {self.drow}, Dcol: {self.dcol}\n"
         s += f"\t\tNrow: {self.nrow}, Ncol: {self.ncol}\n"
@@ -62,7 +64,7 @@ class BinCalibration:
 
 
 @dataclass
-class CalibrationData:
+class CalibrationData(YAMLFile):
     gen_angle_max: float = 15 * math.pi / 180  # In radians
     grabbing_time: float = 0.2
 
@@ -81,72 +83,53 @@ class CalibrationData:
     defect_checking: JointState = JointState(0, 0, 0, 0, 0, 0)
     defect_checking2: JointState = JointState(0, 0, 0, 0, 0, 0)
 
-    @staticmethod
-    def load_from_file(f: str) -> "CalibrationData":
-        # Check if file exist
-        if os.path.exists(f):
-            with open(f, "r") as calib_file:
-                try:
-                    data = dict(yaml.safe_load(calib_file))
-                    if "calibration" in data.keys():
-                        return CalibrationData._load_from_dict(data["calibration"])
-                    return CalibrationData()
-                except yaml.YAMLError as e:
-                    LoggingInterface.serror("YAML Error when loading calib files")
-                    return CalibrationData()
-        else:
-            LoggingInterface.swarn("Given calib file doesn't exist")
-            return CalibrationData()
-
-    @staticmethod
-    def _load_from_dict(d: dict) -> "CalibrationData":
-        out = CalibrationData()
+    def _parse_from_data(self, d: dict) -> "CalibrationData":
+        d = d["calibration"]
 
         # Path Circle Generation Parameters
         if "max-gen-angle" in d.keys():
-            out.gen_angle_max = d["max-gen-angle"] * math.pi / 180
+            self.gen_angle_max = d["max-gen-angle"] * math.pi / 180
 
         if "grab-time" in d.keys():
-            out.grabbing_time = d["grab-time"]
+            self.grabbing_time = d["grab-time"]
 
         # Bin calibrations
         if "input" in d.keys():
-            out.input_bin = BinCalibration.from_dict(d["input"])
+            self.input_bin = BinCalibration.from_dict(d["input"])
         if "good" in d.keys():
-            out.good_bin = BinCalibration.from_dict(d["good"])
+            self.good_bin = BinCalibration.from_dict(d["good"])
         if "defect" in d.keys():
-            out.defect_bin = BinCalibration.from_dict(d["defect"])
+            self.defect_bin = BinCalibration.from_dict(d["defect"])
 
         # Checking positions
         if "checking-approach" in d.keys():
             cpos = d["checking-approach"]
-            out.checking_approach = JointState(
+            self.checking_approach = JointState(
                 cpos[0], cpos[1], cpos[2], cpos[3], cpos[4], cpos[5], deg=True
             )
 
         if "qr-code" in d.keys():
             cpos = d["qr-code"]
-            out.qr_checking = JointState(
+            self.qr_checking = JointState(
                 cpos[0], cpos[1], cpos[2], cpos[3], cpos[4], cpos[5], deg=True
             )
         if "defect-check" in d.keys():
             cpos = d["defect-check"]
-            out.defect_checking = JointState(
+            self.defect_checking = JointState(
                 cpos[0], cpos[1], cpos[2], cpos[3], cpos[4], cpos[5], deg=True
             )
         if "defect-scratches" in d.keys():
             cpos = d["defect-scratches"]
-            out.defect_checking2 = JointState(
+            self.defect_checking2 = JointState(
                 cpos[0], cpos[1], cpos[2], cpos[3], cpos[4], cpos[5], deg=True
             )
-
-        return out
 
     def __repr__(self) -> str:
         s = "Calibration:\n"
         s += f"\tChecking approach position: {self.checking_approach}\n"
         s += f"\tQR code position: {self.qr_checking}\n"
-        s += f"\tDefect position: {self.defect_checking}\n"
+        s += f"\tDefect position 1: {self.defect_checking}\n"
+        s += f"\tDefect position 2: {self.defect_checking2}\n"
         s += f"\tInput: {self.input_bin}"
         s += f"\tGood: {self.good_bin}"
         s += f"\tDefect: {self.defect_bin}"
