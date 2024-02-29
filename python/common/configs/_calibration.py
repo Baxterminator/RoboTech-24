@@ -1,10 +1,7 @@
 from dataclasses import dataclass
 import math
-import yaml
-import os
 
 from ..utils._custom_types import JointState, Pose, Vec2, Vec3
-from ..utils._custom_logger import LoggingInterface
 from ..utils._yaml_loader import YAMLFile
 
 DEFAULT_DZ_APPROACH = 0.05

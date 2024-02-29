@@ -18,6 +18,7 @@ class ConfigurationFile(YAMLFile):
     # MQTT
     mqtt_ip: str = "127.0.0.1"
     mqtt_port: int = 1883
+    mqtt_topic: str = "PLC"
 
     def __init__(self):
         super().__init__("Config")
@@ -31,7 +32,10 @@ class ConfigurationFile(YAMLFile):
             if "port" in data["robot"].keys():
                 self.robot_port = data["robot"]["port"]
         if "mqtt" in data.keys():
-            self.__load_mqtt_config(data["mqtt"])
+            if "file" in data["mqtt"].keys():
+                self.__load_mqtt_config(data["mqtt"]["file"])
+            if "topic" in data["mqtt"].keys():
+                self.mqtt_topic = data["mqtt"]["topic"]
         if "logger-level" in data.keys():
             LoggingInterface.configure_lvl(data["logger-level"])
 
@@ -52,5 +56,5 @@ class ConfigurationFile(YAMLFile):
         s = "Configuration:\n"
         s += f"\tCalib file: {self.calib_file}\n"
         s += f"\tRobot: {self.robot_ip}:{self.robot_port}\n"
-        s += f"\tMQTT: {self.mqtt_ip}:{self.mqtt_port}"
+        s += f"\tMQTT: {self.mqtt_ip}:{self.mqtt_port} /{self.mqtt_topic}"
         return s

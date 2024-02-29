@@ -1,12 +1,9 @@
 from argparse import ArgumentParser
-from python.common.utils._custom_logger import printHeader, printSection
-from python.run._sequencer import CartridgeSequencer
-from python.proxies._robot_proxy import RobotProxy
-from proxies._lector_proxy import LectorProxy
-from python.console._console import robot_console
-from common.utils._yaml_loader import YAMLLoader
-from common.configs._configuration import ConfigurationFile
-from common.configs._calibration import CalibrationData
+from python.run import CartridgeSequencer
+from common.utils import YAMLLoader, printHeader, printSection
+from common.configs import ConfigurationFile, CalibrationData
+from console import run_console
+from proxies import RobotProxy, LectorProxy, InspectorProxy
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -48,16 +45,16 @@ if __name__ == "__main__":
 
     # Create proxies
     robot = RobotProxy(config.robot_ip, config.robot_port)
-    lector = LectorProxy(config.mqtt_ip, "PLC")
+    lector = LectorProxy(config.mqtt_ip, config.mqtt_topic)
 
     # Run everything
     match args.action:
         case "cmd":
             printSection("Console")
-            robot_console(robot, lector, calib)
+            run_console(robot, lector, calib)
         case "run":
             printSection("Sequencer")
-            CartridgeSequencer(robot, calib, args.step).run()
+            CartridgeSequencer(robot, lector, calib, args.step).run()
         case _:
             print("Unknown command!")
     robot.close_connection()

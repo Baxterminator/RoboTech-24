@@ -1,3 +1,4 @@
+from typing import Tuple
 from ._mqtt_proxy import MQTTProxy
 from enum import Enum
 
@@ -6,11 +7,10 @@ class LectorProxy(MQTTProxy):
 
     class Messages(Enum):
         # Lector
-        LECTOR_TRIG_ON = "1"
-        LECTOR_TRIG_OFF = "2"
-        LECTOR_PUBLISH = "3"
+        TRIG_ON = "1"
+        TRIG_OFF = "2"
 
-    def __init__(self, broker_ip: str, topic: str) -> None:
+    def __init__(self, broker_ip: str, topic: str, timeout_s: float = 1) -> None:
         super().__init__(broker_ip, topic)
 
     # =========================================================================
@@ -20,26 +20,31 @@ class LectorProxy(MQTTProxy):
         """
         Launch a call for a a trigger on for the Lector
         """
-        self._send_msg(LectorProxy.Messages.LECTOR_TRIG_ON)
+        self._send_msg(LectorProxy.Messages.TRIG_ON)
 
     def _trigger_off(self):
         """
         Launch a call for a a trigger off for the Lector
         """
-        self._send_msg(LectorProxy.Messages.LECTOR_TRIG_OFF)
+        self._send_msg(LectorProxy.Messages.TRIG_OFF)
 
-    def _publish(self):
+    def read_qr_code(self) -> Tuple[int, int]:
         """
-        Ask for data publishing
+        Return the QR code descripion as (batch, n°)
         """
-        self._send_msg(LectorProxy.Messages.LECTOR_PUBLISH)
-
-    def read_qr_code(self) -> str:
         self._reset()
         self._trigger_on()
         self._reset()
         self._trigger_off()
         self._publish()
-        qr = self._receive_msg()
+        result: bytes = self._receive_msg()
         self._reset()
-        return qr
+
+        if result == b"\x00":
+            return (0, 0)
+
+        # Process the
+        batch = int(result[:3].decode())
+        number = int(result[3:].decode())
+
+        return (batch, number)

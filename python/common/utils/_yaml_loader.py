@@ -2,7 +2,7 @@ from abc import abstractmethod
 import yaml
 import os
 from typing import TypeVar, Generic
-from python.common.utils._custom_logger import LoggingInterface
+from ._custom_logger import LoggingInterface
 
 T = TypeVar("T")
 

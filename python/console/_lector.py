@@ -1,5 +1,5 @@
-from ..proxies._lector_proxy import LectorProxy
-from ..common.utils._custom_logger import LoggingInterface
+from proxies import LectorProxy
+from common.utils import LoggingInterface
 
 
 def lector_action(lector: LectorProxy, args: dict[str]):

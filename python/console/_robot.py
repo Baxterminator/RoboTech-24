@@ -1,6 +1,6 @@
 from typing import List
-from ..proxies._robot_proxy import RobotProxy
-from ..common._state import State
+from proxies import RobotProxy
+from common import State
 
 
 def move_to(state: State, prox: RobotProxy, args: List[str]):

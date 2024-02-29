@@ -1,7 +1,7 @@
 import math
 from typing import Iterator
-from python.common.utils._custom_types import Vec3, Vec2, Pose
-from python.common.utils._custom_logger import LoggingInterface
+from ._custom_types import Vec3, Vec2, Pose
+from ._custom_logger import LoggingInterface
 
 
 def generate_grid_pos(
@@ -20,19 +20,24 @@ def generate_grid_pos(
 
     # Compute the (row, col) nest coordinates
     idx = idx % 25  # Mod 25 since that the number of cartridges per nest
-    idx_col = idx // nrow  # Compute the column index
+
+    # Compute row
     idx_row = idx % nrow
+
+    # Compute col
+    idx_col = idx // nrow
 
     LoggingInterface.sdebug(f"O({origin.x}, {origin.y}, {origin.z})")
 
     # Compute real world coordinates
     return Pose(
-        origin.x
-        + (idx_row if idx_col % 2 == 0 else idx_row + 0.5) * drow.x
-        + idx_col * dcol.x,
-        origin.y
-        + (idx_row if idx_col % 2 == 0 else idx_row + 0.5) * drow.y
-        + idx_col * dcol.y,
+        origin.x + idx_row * drow.x + idx_col * dcol.x,
+        (
+            origin.y
+            + idx_row * drow.y
+            + idx_col * dcol.y
+            + (0 if idx_col % 2 == 0 else drow.y / 2)
+        ),
         origin.z,
     )
 
