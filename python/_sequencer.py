@@ -68,8 +68,13 @@ class CartridgeSequencer(LoggingInterface):
         Let's go to input
         """
         self._info("Going to input bin")
+        self._proxy.close_gripper()
+        self._proxy.open_gripper()
+        self._proxy.close_gripper()
         self._proxy.open_gripper()
         self._proxy.send_comment("Moving to input bin")
+        self._proxy.movej(self.state.get_safe_input_pos())
+        self._step_pos()
         self._proxy.movel(self.state.get_input_grabbing_approach_pos())
         self._step_pos()
         self._proxy.movel(self.state.get_input_grabbing_pos())
@@ -83,6 +88,8 @@ class CartridgeSequencer(LoggingInterface):
         self._proxy.send_comment("Returning to approach position")
         self._proxy.movel(self.state.get_input_grabbing_approach_pos())
         self._step_pos()
+        self._proxy.movej(self.state.get_safe_input_pos())
+        self._step_pos()
         self.state.step = Step.CHECK_QR
 
     def check_qr(self):
@@ -91,12 +98,13 @@ class CartridgeSequencer(LoggingInterface):
         """
         self._info("Checking for QR code")
         self._proxy.send_comment("Moving to QR checking")
-        # self._proxy.movel(self.state.get_checking_approach_pos())
-        # self._proxy.movej(self.state.get_qr_checking_pos())
-        # self._proxy.wait_steady()
+        self._proxy.movej(self.state.get_checking_approach_pos())
+        self._proxy.movej(self.state.get_qr_checking_pos())
+        self._proxy.wait_steady()
         self._step_pos()
         # TODO: Check QR Code
-        defect = True
+        self.state.read_idx = 0
+        defect = False
         if defect:
             self._info("QR-Code anomaly detected, moving it to the defect bin!")
             self.state.step = Step.MV_BAD_BIN
@@ -104,17 +112,21 @@ class CartridgeSequencer(LoggingInterface):
             self._info("No anomalies for the QR-Code, continuing checking")
             self.state.step = Step.CHECK_ANOMALIES
 
+        self._proxy.movej(self.state.get_checking_approach_pos())
+
     def check_anomaly(self):
         """
         Checking for anomalies
         """
         self._info("Checking for anomalies")
         self._proxy.send_comment("Moving to Anomalies checking")
-        # self._proxy.movej(self.state.get_defect_checking_pos())
-        # self._proxy.wait_steady()
+        self._proxy.movej(self.state.get_defect_checking_pos())
+        self._proxy.wait_steady()
+        self._proxy.movej(self.state.get_defect_checking_pos2())
+        self._proxy.wait_steady()
         self._step_pos()
         # TODO: Check defects
-        defect = False
+        defect = True
         if defect:
             self._info("Cartridge anomaly detected, moving it to the defect bin.")
             self.state.step = Step.MV_BAD_BIN
@@ -122,7 +134,7 @@ class CartridgeSequencer(LoggingInterface):
             self._info("No cartridge anomaly detected, moving it to the good  bin.")
             self.state.step = Step.MV_GOOD_BIN
 
-        # self._proxy.movel(self.state.get_checking_approach_pos())
+        self._proxy.movej(self.state.get_checking_approach_pos())
         self._step_pos()
 
     def go_good_bin(self):
@@ -132,6 +144,8 @@ class CartridgeSequencer(LoggingInterface):
         self._info("Dropping inside good bin")
 
         self._proxy.send_comment("Moving to good bin position")
+        self._proxy.movej(self.state.get_safe_good_pos())
+        self._step_pos()
         self._proxy.movej(self.state.get_good_dropping_approach_pos())
         self._step_pos()
         self._proxy.movel(self.state.get_good_dropping_pos())
@@ -145,6 +159,8 @@ class CartridgeSequencer(LoggingInterface):
         self._proxy.send_comment("Returning to approach position")
         self._proxy.movel(self.state.get_good_dropping_approach_pos())
         self._step_pos()
+        self._proxy.movej(self.state.get_safe_good_pos())
+        self._step_pos()
         self.state.step = Step.END_CARTRIDGE
 
     def go_bad_bin(self):
@@ -153,12 +169,9 @@ class CartridgeSequencer(LoggingInterface):
         """
         self._info("Dropping inside defect bin")
         self._proxy.send_comment("Going to the defective bin ...")
-        self._proxy.movej(self.state.get_good_dropping_approach_pos())
-        # for p in self.state.cpath(
-        #     self.state.get_good_dropping_approach_pos(),
-        #     self.state.get_defect_dropping_approach_pos(),
-        # ):
-        #     self._proxy.movej(p)
+        self._proxy.movej(self.state.get_safe_good_pos())
+        self._step_pos()
+        self._proxy.movej(self.state.get_safe_defect_pos())
         self._step_pos()
 
         self._proxy.send_comment("Moving to defective bin approach position")
@@ -177,13 +190,9 @@ class CartridgeSequencer(LoggingInterface):
         self._step_pos()
 
         self._proxy.send_comment("Going to the input bin ...")
-        self._proxy.movel(self.state.get_defect_dropping_approach_pos())
+        self._proxy.movej(self.state.get_safe_defect_pos())
         self._step_pos()
-        for p in self.state.cpath(
-            self.state.get_defect_dropping_approach_pos(),
-            self.state.get_good_dropping_approach_pos(),
-        ):
-            self._proxy.movej(p)
+        self._proxy.movej(self.state.get_safe_good_pos())
         self._step_pos()
 
         self.state.step = Step.END_CARTRIDGE

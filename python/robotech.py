@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # Run everything
     match args.action:
         case "cmd":
-            robot_console(robot)
+            robot_console(robot, args.config)
         case "run":
             print(args.step)
             CartridgeSequencer(robot, args.config, args.step).run()

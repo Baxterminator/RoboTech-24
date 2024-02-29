@@ -12,6 +12,7 @@ DEFAULT_DZ_APPROACH = 0.05
 @dataclass
 class BinCalibration:
     origin: Vec3
+    safe: JointState
     dz: float = DEFAULT_DZ_APPROACH
 
     drow: Vec2 = Vec2(0.0, 0.0)
@@ -22,8 +23,18 @@ class BinCalibration:
 
     @staticmethod
     def from_dict(d: dict) -> "BinCalibration":
-        bin = BinCalibration(Vec3(0, 0, 0))
+        bin = BinCalibration(Vec3(0, 0, 0), JointState(0, 0, 0, 0, 0, 0))
 
+        if "safe" in d.keys() and len(d["safe"]) >= 6:
+            bin.safe = JointState(
+                d["safe"][0],
+                d["safe"][1],
+                d["safe"][2],
+                d["safe"][3],
+                d["safe"][4],
+                d["safe"][5],
+                True,
+            )
         if "origin" in d.keys() and len(d["origin"]) >= 3:
             # Save origin position and make the right orientation for the tool
             o = d["origin"]
@@ -55,13 +66,20 @@ class CalibrationData:
     gen_angle_max: float = 15 * math.pi / 180  # In radians
     grabbing_time: float = 0.2
 
-    input_bin: BinCalibration = BinCalibration(Vec3(0, 0, 0))
-    good_bin: BinCalibration = BinCalibration(Vec3(0, 0, 0))
-    defect_bin: BinCalibration = BinCalibration(Vec3(0, 0, 0))
+    input_bin: BinCalibration = BinCalibration(
+        Vec3(0, 0, 0), JointState(0, 0, 0, 0, 0, 0)
+    )
+    good_bin: BinCalibration = BinCalibration(
+        Vec3(0, 0, 0), JointState(0, 0, 0, 0, 0, 0)
+    )
+    defect_bin: BinCalibration = BinCalibration(
+        Vec3(0, 0, 0), JointState(0, 0, 0, 0, 0, 0)
+    )
 
     checking_approach: JointState = JointState(0, 0, 0, 0, 0, 0)
     qr_checking: JointState = JointState(0, 0, 0, 0, 0, 0)
     defect_checking: JointState = JointState(0, 0, 0, 0, 0, 0)
+    defect_checking2: JointState = JointState(0, 0, 0, 0, 0, 0)
 
     @staticmethod
     def load_from_file(f: str) -> "CalibrationData":
@@ -114,6 +132,11 @@ class CalibrationData:
         if "defect-check" in d.keys():
             cpos = d["defect-check"]
             out.defect_checking = JointState(
+                cpos[0], cpos[1], cpos[2], cpos[3], cpos[4], cpos[5], deg=True
+            )
+        if "defect-scratches" in d.keys():
+            cpos = d["defect-scratches"]
+            out.defect_checking2 = JointState(
                 cpos[0], cpos[1], cpos[2], cpos[3], cpos[4], cpos[5], deg=True
             )
 

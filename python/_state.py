@@ -56,6 +56,12 @@ class State:
             self.input_idx,
         )
 
+    def get_safe_input_pos(self) -> JointState:
+        """
+        Get the safe position for moving between bins
+        """
+        return self.calib.input_bin.safe
+
     def get_input_grabbing_pos(self) -> Pose:
         """
         Get the input grabbing position for the state's cartridge.
@@ -94,6 +100,12 @@ class State:
             self.read_idx,
         )
 
+    def get_safe_good_pos(self) -> JointState:
+        """
+        Get the safe position for moving between bins
+        """
+        return self.calib.good_bin.safe
+
     def get_good_dropping_pos(self) -> Pose:
         """
         Get the good output bin dropping position for the state's cartridge.
@@ -131,6 +143,12 @@ class State:
             self.calib.defect_bin.ncol,
             self.read_idx,
         )
+
+    def get_safe_defect_pos(self) -> JointState:
+        """
+        Get the safe position for moving between bins
+        """
+        return self.calib.defect_bin.safe
 
     def get_defect_dropping_pos(self) -> Pose:
         """
@@ -174,3 +192,9 @@ class State:
         Get the position of to check the defects on the cartridge.
         """
         return self.calib.defect_checking
+
+    def get_defect_checking_pos2(self) -> JointState:
+        """
+        Get the position of to check the defects on the cartridge.
+        """
+        return self.calib.defect_checking2
