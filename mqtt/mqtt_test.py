@@ -3,8 +3,8 @@ import paho.mqtt.publish as publish
 import paho.mqtt.subscribe as subscribe
 import time
 
-HOSTNAME = "172.21.222.200"  # test one
-# HOSTNAME = "10.13.15.187" # nne wifi one
+# HOSTNAME = "172.21.222.200"  # test one
+HOSTNAME = "10.13.15.157"  # nne wifi one
 
 
 def send_msg_plc(msg):
@@ -19,11 +19,17 @@ def wait_msg_plc():
 
 
 def get_qr_code():
-    send_msg_plc("ltrigon")
+    send_msg_plc("0")  # reset
     time.sleep(0.100)
-    send_msg_plc("ltrigoff")
-    send_msg_plc("getqr")
+    send_msg_plc("1")  # trigon
+    time.sleep(0.200)
+    send_msg_plc("0")  # resetV
+    time.sleep(0.100)
+    send_msg_plc("2")  # trigoff
+    time.sleep(0.1)
+    send_msg_plc("3")  # publish
     qr = wait_msg_plc()
+    send_msg_plc("0")
     return qr
 
 
@@ -33,7 +39,6 @@ def get_faulty_status():
 
 
 if __name__ == "__main__":
-    send_msg_plc("test_yo")
     # print(wait_msg_plc())
     print(get_qr_code())
 # # The callback for when the client receives a CONNACK response from the server.

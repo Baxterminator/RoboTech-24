@@ -1,0 +1,16 @@
+#ltrigon := TRUE;
+
+
+
+FOR #i := 1 TO 9 DO
+    IF "MQTT DB".receivedmsgpayload[#i] <> "msg_database".ltrigon[#i] THEN
+        #ltrigon := FALSE;
+        EXIT; // Exit loop if any element doesn't match
+    END_IF;
+END_FOR;
+
+
+IF #ltrigon THEN
+    "MQTT DB".publish := TRUE;
+END_IF;
+

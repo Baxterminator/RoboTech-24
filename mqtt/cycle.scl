@@ -1,0 +1,13 @@
+// Read the current data
+#currentData := "MQTT DB".receivedmsgpayload; // Implement ReadData() to read the current data
+
+// Check for changes in the data
+IF #currentData <> "CycleDatabase".previous THEN
+    // Call the Function Block to handle the data change
+    "MQTT_RESPONSE_TEST_DB"();
+
+
+    // Update the previous data
+    "CycleDatabase".previous := #currentData;
+END_IF;
+

@@ -1,0 +1,29 @@
+PROGRAM MainProgram
+VAR
+    // No need for receivedMsgPayload variable
+END_VAR
+
+// Assuming MQTT DB is a data block
+IF "MQTT DB".receivedmsgpayload[0] = 31X THEN
+    // Do something for value 1
+ELSIF "MQTT DB".receivedmsgpayload[0] = 32X THEN
+    // Do something else for value 2
+ELSIF "MQTT DB".receivedmsgpayload[0] = 33X THEN
+    // Do something for value 3
+ELSIF "MQTT DB".receivedmsgpayload[0] = 34X THEN
+    // Do something else for value 4
+ELSIF "MQTT DB".receivedmsgpayload[0] = 35X THEN
+    // Do something for value 5
+ELSIF "MQTT DB".receivedmsgpayload[0] = 36X THEN
+    // Do something else for value 6
+ELSIF "MQTT DB".receivedmsgpayload[0] = 37X THEN
+    // Do something for value 7
+ELSIF "MQTT DB".receivedmsgpayload[0] = 38X THEN
+    // Do something else for value 8
+ELSIF "MQTT DB".receivedmsgpayload[0] = 39X THEN
+    // Do something for value 9
+ELSIF "MQTT DB".receivedmsgpayload[0] = 3AX THEN
+    // Do something else for value 10
+ELSE
+    // Handle other cases if needed
+END_IF
