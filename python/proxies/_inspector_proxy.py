@@ -10,7 +10,7 @@ class InspectorJob(Enum):
 
 class InspectorProxy(MQTTProxy):
 
-    class Messages(Enum):
+    class Messages:
         TRIGGER_ON = "4"
         TRIGGER_OFF = "8"
 

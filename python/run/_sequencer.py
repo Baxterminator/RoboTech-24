@@ -111,7 +111,7 @@ class CartridgeSequencer(LoggingInterface):
 
         if batch != 100 or num < 26 or num > 50:
             self._info("QR-Code anomaly detected, moving it to the defect bin!")
-            self.state.step = Step.MV_BAD_BIN
+            self.state.step = Step.MV_GOOD_BIN
         else:
             self.state.read_idx = num
             self._info("No anomalies for the QR-Code, continuing checking")
@@ -131,7 +131,7 @@ class CartridgeSequencer(LoggingInterface):
         self._robot.wait_steady()
         self._step_pos()
         # TODO: Check defects
-        defect = True
+        defect = False
         if defect:
             self._info("Cartridge anomaly detected, moving it to the defect bin.")
             self.state.step = Step.MV_BAD_BIN

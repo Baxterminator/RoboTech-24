@@ -140,7 +140,7 @@ class State:
             self.calib.defect_bin.dcol,
             self.calib.defect_bin.nrow,
             self.calib.defect_bin.ncol,
-            self.read_idx,
+            self.defect_idx,
         )
 
     def get_safe_defect_pos(self) -> JointState:

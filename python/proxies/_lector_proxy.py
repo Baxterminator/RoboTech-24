@@ -1,11 +1,12 @@
 from typing import Tuple
 from ._mqtt_proxy import MQTTProxy
 from enum import Enum
+from time import sleep
 
 
 class LectorProxy(MQTTProxy):
 
-    class Messages(Enum):
+    class Messages:
         # Lector
         TRIG_ON = "1"
         TRIG_OFF = "2"
@@ -33,18 +34,22 @@ class LectorProxy(MQTTProxy):
         Return the QR code descripion as (batch, n°)
         """
         self._reset()
+        sleep(0.1)
         self._trigger_on()
+        sleep(0.3)
         self._reset()
+        sleep(0.3)
         self._trigger_off()
+        sleep(0.1)
         self._publish()
-        result: bytes = self._receive_msg()
+        result: str = self._receive_msg().decode()
         self._reset()
-
-        if result == b"\x00":
-            return (0, 0)
 
         # Process the
+        if len(result) < 5:
+            return (0, 0)
+
         batch = int(result[:3].decode())
-        number = int(result[3:].decode())
+        number = int(result[3:6].decode())
 
         return (batch, number)
