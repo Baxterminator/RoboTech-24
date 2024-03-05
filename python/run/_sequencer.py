@@ -1,7 +1,7 @@
 from time import sleep
 import signal
 
-from python.proxies import RobotProxy, LectorProxy
+from python.proxies import RobotProxy, LectorProxy, InspectorProxy
 from python.common.configs._calibration import CalibrationData
 from python.common.utils._custom_logger import LoggingInterface
 from common._state import Step, State
@@ -22,6 +22,8 @@ class CartridgeSequencer(LoggingInterface):
         self.step = step
         self.state = State(calib_data)
         self.STOP = False
+
+        self.done_cell: list = []
         signal.signal(signal.SIGTERM, self.stop_sequence)
 
     def _step_pos(self) -> None:
@@ -108,14 +110,19 @@ class CartridgeSequencer(LoggingInterface):
 
         # Check QR-code
         batch, num = self._lector.read_qr_code()
-
-        if batch != 100 or num < 26 or num > 50:
-            self._info("QR-Code anomaly detected, moving it to the defect bin!")
-            self.state.step = Step.MV_GOOD_BIN
+        if num not in self.done_cell:
+            print(batch, num)
+            self.done_cell.append(num)
+            if batch != 100 or num < 26 or num > 50:
+                self._info("QR-Code anomaly detected, moving it to the defect bin!")
+                self.state.step = Step.MV_BAD_BIN
+            else:
+                self.state.read_idx = num
+                self._info("No anomalies for the QR-Code, continuing checking")
+                self.state.step = Step.CHECK_ANOMALIES
         else:
-            self.state.read_idx = num
-            self._info("No anomalies for the QR-Code, continuing checking")
-            self.state.step = Step.CHECK_ANOMALIES
+            self._info("QR-Code anomaly detected, moving it to the defect bin!")
+            self.state.step = Step.MV_BAD_BIN
 
         self._robot.movej(self.state.get_checking_approach_pos())
 

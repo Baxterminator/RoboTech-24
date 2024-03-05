@@ -1,6 +1,7 @@
 import socket
 from common.utils._custom_types import JointState, Pose, rad2deg, EULER_CONV
 from common.utils._custom_logger import LoggingInterface
+from scipy.spatial.transform import Rotation
 
 
 class RobotProxy(LoggingInterface):
@@ -145,7 +146,7 @@ class RobotProxy(LoggingInterface):
             return None
 
         elems = result.split(RobotProxy.PARAM_SEP)
-        if len(elems) <= 7 or elems[0] != RobotProxy.GET_JOINT_POS:
+        if len(elems) < 7 or elems[0] != RobotProxy.GET_JOINT_POS:
             self._error(f"Malformed result for GetJoinState : '{result}'")
             return None
 
@@ -174,18 +175,21 @@ class RobotProxy(LoggingInterface):
             return None
 
         elems = result.split(RobotProxy.PARAM_SEP)
-        if len(elems) <= 7 or elems[0] != RobotProxy.GET_TCP_POS:
-            self._error(f"Malformed result for GetJoinState : '{result}'")
+        if len(elems) < 7 or elems[0] != RobotProxy.GET_TCP_POS:
+            self._error(f"Malformed result for GeTCPState : '{result}'")
             return None
 
         return Pose(
             float(elems[1]),
             float(elems[2]),
             float(elems[3]),
-            rad2deg(float(elems[4])) if degrees else float(elems[4]),
-            rad2deg(float(elems[5])) if degrees else float(elems[5]),
-            rad2deg(float(elems[6])) if degrees else float(elems[6]),
-            False,
+            Rotation.from_rotvec(
+                [
+                    rad2deg(float(elems[4])) if degrees else float(elems[4]),
+                    rad2deg(float(elems[5])) if degrees else float(elems[5]),
+                    rad2deg(float(elems[6])) if degrees else float(elems[6]),
+                ]
+            ),
         )
 
     def movej(self, target: JointState | Pose) -> bool:

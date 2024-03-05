@@ -33,23 +33,30 @@ class LectorProxy(MQTTProxy):
         """
         Return the QR code descripion as (batch, n°)
         """
-        self._reset()
-        sleep(0.1)
-        self._trigger_on()
-        sleep(0.3)
-        self._reset()
-        sleep(0.3)
-        self._trigger_off()
-        sleep(0.1)
-        self._publish()
-        result: str = self._receive_msg().decode()
-        self._reset()
+        result = ""
+        try:
+            self._reset()
+            sleep(0.1)
+            self._trigger_on()
+            sleep(0.3)
+            self._reset()
+            sleep(0.3)
+            self._trigger_off()
+            sleep(0.1)
+            self._publish()
+            result: str = self._receive_msg().decode()
+            print(result)
+            self._reset()
 
-        # Process the
-        if len(result) < 5:
+            # Process the
+            if len(result) < 5:
+                return (0, 0)
+
+            batch = int(result[:3])
+            number = int(result[3:5])
+            print(result[:3], result[3:5])
+            print(batch, number)
+            return (batch, number)
+
+        except:
             return (0, 0)
-
-        batch = int(result[:3].decode())
-        number = int(result[3:6].decode())
-
-        return (batch, number)

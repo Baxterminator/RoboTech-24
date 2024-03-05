@@ -61,6 +61,10 @@ class JointState:
         s += f'{f"Wrist 3: {self.wrist3}{u}".ljust(20)}'
         return s
 
+    def to_yaml(self) -> dict:
+        d = self.in_deg()
+        return [d.base, d.shoulder, d.elbow, d.wrist1, d.wrist2, d.wrist3]
+
 
 @dataclass
 class Pose:
@@ -82,6 +86,10 @@ class Pose:
                 degrees=False,
             )
 
+    def to_yaml(self) -> dict:
+        r = self.rot.as_euler(EULER_CONV)
+        return [self.x, self.y, self.z, r[0], r[1], r[2]]
+
 
 @dataclass
 class Vec3:
@@ -89,8 +97,14 @@ class Vec3:
     y: float
     z: float
 
+    def to_yaml(self) -> dict:
+        return [self.x, self.y, self.z]
+
 
 @dataclass
 class Vec2:
     x: float
     y: float
+
+    def to_yaml(self) -> dict:
+        return [self.x, self.y]

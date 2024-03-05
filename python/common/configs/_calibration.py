@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import math
 
 from ..utils._custom_types import JointState, Pose, Vec2, Vec3
@@ -58,6 +58,17 @@ class BinCalibration:
         s += f"\t\tDrow: {self.drow}, Dcol: {self.dcol}\n"
         s += f"\t\tNrow: {self.nrow}, Ncol: {self.ncol}\n"
         return s
+
+    def to_yaml(self) -> dict:
+        return {
+            "safe": self.safe.to_yaml(),
+            "origin": self.origin.to_yaml(),
+            "drow": self.drow.to_yaml(),
+            "dcol": self.dcol.to_yaml(),
+            "nrow": self.nrow,
+            "ncol": self.ncol,
+            "app_dz": self.dz,
+        }
 
 
 @dataclass
@@ -131,3 +142,17 @@ class CalibrationData(YAMLFile):
         s += f"\tGood: {self.good_bin}"
         s += f"\tDefect: {self.defect_bin}"
         return s
+
+    def to_yaml(self) -> dict:
+        return {
+            "calibration": {
+                "checking-approach": self.checking_approach.to_yaml(),
+                "qr-code": self.qr_checking.to_yaml(),
+                "defect-check": self.defect_checking.to_yaml(),
+                "defect-scratches": self.defect_checking2.to_yaml(),
+                "input": self.input_bin.to_yaml(),
+                "good": self.good_bin.to_yaml(),
+                "defect": self.defect_bin.to_yaml(),
+            }
+        }
+

@@ -1,4 +1,5 @@
 from enum import Enum
+from time import sleep
 from ._mqtt_proxy import MQTTProxy
 
 
@@ -55,23 +56,32 @@ class InspectorProxy(MQTTProxy):
         self._send_msg(InspectorProxy.Messages.JOB_SCRATCHES)
 
     def run_job(self, job: InspectorJob) -> bool:
-        self._reset()
-        match job:
-            case InspectorJob.BUBBLE:
-                self._job_bubble()
-            case InspectorJob.PISTON:
-                self._job_piston()
-            case InspectorJob.SCRATCHES:
-                self._job_scratches()
-        self._reset()
-        self._trigger_on()
-        self._reset()
-        self._trigger_off()
-        self._publish()
-        result: bytes = self._receive_msg()
-        self._reset()
-
-        if result == b"\x00" or len(result) >= 5:
+        try:
+            self._reset()
+            sleep(0.3)
+            match job:
+                case InspectorJob.BUBBLE:
+                    self._job_bubble()
+                case InspectorJob.PISTON:
+                    self._job_piston()
+                case InspectorJob.SCRATCHES:
+                    self._job_scratches()
+            sleep(0.3)
+            self._reset()
+            sleep(0.3)
+            self._trigger_on()
+            sleep(0.3)
+            self._reset()
+            sleep(0.3)
+            self._trigger_off()
+            sleep(0.3)
+            self._publish()
+            result: str = self._receive_msg().decode()
+            self._reset()
+        except:
             return False
 
-        return bool(result[5].decode())
+        if len(result) < 5:
+            return False
+
+        return bool(result[5])
